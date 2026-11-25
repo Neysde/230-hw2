@@ -1,0 +1,28 @@
+mkdir docs
+mkdir docs
+touch a
+mkdir a
+cd a
+pwd extra
+ls -z
+cat missing
+du missing
+touch missing/a
+ln docs h
+ln -s missing s
+ln -s docs s
+cp docs copy
+mv missing target
+mv / root
+mkdir docs/sub
+mv docs docs/sub
+rm docs
+rm /
+cd docs
+rm .
+rm ..
+pwd
+cd /
+tree
+echo still working
+exit

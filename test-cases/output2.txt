@@ -1,0 +1,21 @@
+
+
+
+
+/home/user
+
+
+/home/user/docs
+
+hello
+
+/home/user/docs
+
+/
+
+/
+bushell: error
+/
+bushell: error
+/
+

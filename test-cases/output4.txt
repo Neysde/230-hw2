@@ -1,0 +1,33 @@
+
+
+
+
+
+
+
+apple/ banana.txt notes.txt shortcut@ zebra/
+/
+  apple/
+    sub/
+      file.txt
+  banana.txt
+  notes.txt
+  shortcut@
+  zebra/
+
+
+apple/ banana.txt notes.txt shortcut@ zebra/
+
+sub/
+
+
+
+/
+  apple/
+    sub/
+      file.txt
+  banana.txt
+  notes.txt
+  shortcut@
+  zebra/
+

@@ -1,0 +1,19 @@
+mkdir zebra
+mkdir apple
+touch notes.txt
+touch banana.txt
+mkdir apple/sub
+touch apple/sub/file.txt
+ln -s notes.txt shortcut
+ls
+tree
+mkdir .hidden
+touch .secret
+ls
+cd apple
+ls
+cd /
+rm .secret
+rm .hidden
+tree
+exit

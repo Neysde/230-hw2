@@ -1,0 +1,61 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Build bushell",
+      "type": "shell",
+      "command": "make",
+      "group": { "kind": "build", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Build bushell (debug)",
+      "type": "shell",
+      "command": "make clean && make CFLAGS='-Wall -Wextra -pedantic -g -O0'",
+      "group": "build",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Compile current file",
+      "type": "shell",
+      "command": "gcc -Wall -Wextra -pedantic -g -o '${fileDirname}/${fileBasenameNoExtension}' '${file}'",
+      "group": "build",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Run all tests (make grade)",
+      "type": "shell",
+      "command": "make grade",
+      "group": { "kind": "test", "isDefault": true },
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Run one test case",
+      "type": "shell",
+      "command": "make && ./bushell < test-cases/input${input:testNumber}.txt",
+      "group": "test",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Diff one test case",
+      "type": "shell",
+      "command": "make grade; diff test-cases/output${input:testNumber}.txt my_outputs/my_output${input:testNumber}.txt && echo 'No differences.'",
+      "group": "test",
+      "problemMatcher": ["$gcc"]
+    },
+    {
+      "label": "Clean",
+      "type": "shell",
+      "command": "make clean && rm -rf my_outputs",
+      "problemMatcher": []
+    }
+  ],
+  "inputs": [
+    {
+      "id": "testNumber",
+      "type": "promptString",
+      "description": "Test case number (e.g. 1 for input1.txt)",
+      "default": "1"
+    }
+  ]
+}

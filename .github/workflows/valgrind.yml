@@ -1,0 +1,41 @@
+name: Valgrind
+
+on: push
+
+jobs:
+  valgrind:
+    runs-on: ubuntu-latest
+
+    container:
+      image: gokceuludogan/cmpe230-spring26:latest
+      options: --user 0
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile C Program
+        run: make
+
+      - name: Run Valgrind
+        run: |
+          passed=0
+          total=0
+          for f in $(ls test-cases/input*.txt | sort -V); do
+            total=$((total + 1))
+            echo "::group::$f"
+            if timeout 60 valgrind --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1 ./bushell < "$f" > /dev/null; then
+              passed=$((passed + 1))
+              result=PASS
+            else
+              result=FAIL
+            fi
+            echo "::endgroup::"
+            echo "$f: $result"
+          done
+          echo "$passed/$total" | tee valgrind.txt
+
+      - name: Publish Result
+        run: |
+          echo "Valgrind clean: " >> $GITHUB_STEP_SUMMARY
+          cat valgrind.txt >> $GITHUB_STEP_SUMMARY
+          test "$(cut -d/ -f1 valgrind.txt)" = "$(cut -d/ -f2 valgrind.txt)"

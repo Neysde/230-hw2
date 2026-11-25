@@ -1,0 +1,22 @@
+Hello World
+Hello   World
+test "123
+
+a > b
+
+
+hello
+world
+12	a
+
+x
+2	a
+
+x
+
+/
+
+a b docs/ location
+bushell: error
+recovered
+

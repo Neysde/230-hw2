@@ -1,0 +1,34 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Debug bushell with test input",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bushell",
+      "args": ["<", "${workspaceFolder}/test-cases/input${input:testNumber}.txt"],
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "preLaunchTask": "Build bushell (debug)",
+      "externalConsole": false
+    },
+    {
+      "name": "Debug bushell (interactive)",
+      "type": "cppdbg",
+      "request": "launch",
+      "program": "${workspaceFolder}/bushell",
+      "cwd": "${workspaceFolder}",
+      "MIMode": "gdb",
+      "preLaunchTask": "Build bushell (debug)",
+      "externalConsole": false
+    }
+  ],
+  "inputs": [
+    {
+      "id": "testNumber",
+      "type": "promptString",
+      "description": "Test case number (e.g. 1 for input1.txt)",
+      "default": "1"
+    }
+  ]
+}

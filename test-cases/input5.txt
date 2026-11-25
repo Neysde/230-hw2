@@ -1,0 +1,21 @@
+echo original > a
+ln a h1
+ln a h2
+ls
+cat h1
+du h2
+echo updated > h1
+cat a
+cat h2
+echo appended >> h2
+cat a
+rm a
+cat h1
+cat h2
+rm h1
+echo final > h2
+cat h2
+du h2
+rm h2
+ls
+exit

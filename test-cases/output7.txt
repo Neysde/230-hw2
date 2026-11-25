@@ -1,0 +1,36 @@
+
+
+
+
+original
+
+updated
+
+
+
+updated
+
+
+new
+updated
+
+a c docs/ h
+/
+  a
+  c
+  docs/
+    a
+    b
+  h
+
+
+updated
+/
+  a
+  archive/
+    docs/
+      a
+      b
+  c
+  h
+
