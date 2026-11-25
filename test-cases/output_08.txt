@@ -1,0 +1,4 @@
+....EEBBACC....
+......EEBAACC..
+DD......EEBAAAC
+E=10 B=11 A=14 D=2 C=15

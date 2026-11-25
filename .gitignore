@@ -1,2 +1,7 @@
-my_outputs/
-bushell
+*__pycache__
+overclocked
+*.o
+my-outputs
+*.DS_Store
+.idea*
+.vscode*

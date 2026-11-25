@@ -2,7 +2,6 @@
 
 \usepackage[a4paper,margin=1in]{geometry}
 \usepackage{enumitem}
-\usepackage{graphicx}
 \usepackage{listings}
 \usepackage{xcolor}
 \usepackage{hyperref}
@@ -10,21 +9,19 @@
 \setlength{\parindent}{0pt}
 \setlength{\parskip}{0.6em}
 
-% C Code Style
-\lstdefinestyle{CStyle}{
-    language=C,
+% Assembly style
+\lstdefinestyle{AsmStyle}{
+    language={[x86masm]Assembler},
     basicstyle=\ttfamily\footnotesize,
     keywordstyle=\color{blue},
     commentstyle=\color{green!40!black},
-    stringstyle=\color{red!70!black},
     numbers=left,
     numberstyle=\tiny,
-    stepnumber=1,
     breaklines=true,
     frame=single
 }
 
-\title{Assignment 1 Report: \texttt{bushell}\\
+\title{Project 2 Report: \texttt{overclocked}\\
 \large CMPE 230 Systems Programming -- Fall 2026}
 
 \author{
@@ -40,143 +37,370 @@ Student 2 Name, Student 2 ID
 
 \section*{Report Guidelines}
 
-This report should explain \textbf{your implementation decisions}, not repeat the assignment handout.
+This report must explain \textbf{how your assembly program works internally}.
 
-Useful writing tips:
-\begin{itemize}[leftmargin=1.5em]
-\item Describe the \textbf{actual design choices you made} in your program.
-\item Refer to your data structures and helper functions.
-\item Explain tricky cases or design tradeoffs.
-\item Use short examples from your implementation or tests.
+Avoid generic statements. Focus on:
+\begin{itemize}
+\item how parsing is implemented at register level,
+\item how program state is stored in memory,
+\item how each chef's choice is computed,
+\item how control flow is structured in assembly.
 \end{itemize}
-You are free the express your project based upon how you made it but if you prefer, here is an outline:
+
 
 \section{Project Overview}
 
-Briefly describe the overall structure of your program.
-
-You may discuss:
-\begin{itemize}[leftmargin=1.5em]
-\item what the program does,
-\item what the persistent state of the program is,
-\item what design priorities shaped your implementation (simplicity, validation, modularity, debugging, etc.).
+Briefly describe:
+\begin{itemize}
+\item what your simulator does,
+\item supported chef rules (FIRST, QUICK, TURNS-q),
+\item overall execution flow from input to output.
 \end{itemize}
 
-\section{Interpreter Design}
 
-Explain the overall design of your interpreter.
+\section{Parsing Logic}
 
-\subsection{Input Handling and Parsing}
+\subsection{Input Processing Strategy}
 
-Describe how one input line is processed.
+Explain how you parse the single input line:
 
-Possible points:
-\begin{itemize}[leftmargin=1.5em]
-\item how input lines are read,
-\item how commands are recognized,
-\item how the program checks whether a line fully matches the grammar,
-\item how invalid commands are detected.
+\begin{itemize}
+\item how tokens are separated (spaces, hyphens),
+\item how the three chef rules (and $q$ for TURNS-q) are detected,
+\item how numeric values are parsed from characters.
 \end{itemize}
 
-\subsection{State Representation}
+\subsection{Register-Level Parsing Design}
 
-Describe how the files, directories, links are stored in memory.
+Describe explicitly:
 
-Explain why your chosen representation (arrays, structs, counters, etc.) works well for this assignment.
-
-\subsection{Command Execution Flow}
-
-Choose one or two representative commands and explain how they are executed.
-
-Describe:
-\begin{itemize}[leftmargin=1.5em]
-\item which function processes the command,
-\item what checks are performed,
-\item what state changes occur,
-\item what output is produced.
+\begin{itemize}
+\item which registers hold pointers (e.g., input buffer),
+\item which registers hold temporary numeric values,
+\item how digits are accumulated into integers,
+\item how delimiters (' ', '-') are handled.
 \end{itemize}
 
-\section{Implementation Details}
+Explain how your parsing avoids corruption and maintains correctness.
 
-Discuss parts of the implementation that required careful design or debugging. 
+\section{State Representation (Memory Layout)}
 
-Focus on a few important cases rather than describing the entire program.
+Explain how all kitchen data is stored.
 
-\subsection{Representative Code Snippet}
+\subsection{Order Representation}
 
-Include a short excerpt (10--20 lines) from your implementation.
+Describe how each order is represented:
 
-\begin{lstlisting}[style=CStyle]
-/* Example snippet from your project */
+\begin{itemize}
+\item ID (character),
+\item arrival time,
+\item work time at each station (Prep, Cook, Plate),
+\item remaining work at each station,
+\item entry time at each station,
+\item serve time.
+\end{itemize}
+
+Explain whether you used:
+\begin{itemize}
+\item arrays,
+\item structs (manual layout),
+\item separate parallel arrays.
+\end{itemize}
+
+\subsection{Global State}
+
+Explain:
+\begin{itemize}
+\item current time,
+\item the line of waiting orders at each station,
+\item the order each chef is currently working on (and turn counter for TURNS-q),
+\item the three timeline buffers and the serve-times buffer,
+\item counters (orders not yet served).
+\end{itemize}
+
+
+\section{Register Usage Strategy}
+
+Clearly document your register design:
+
+\begin{itemize}
+\item which registers are used for:
+    \begin{itemize}
+    \item loop counters,
+    \item pointers,
+    \item current station and order index,
+    \item temporary computations,
+    \end{itemize}
+\item which registers are preserved across function calls (if any),
+\item how you avoid accidental overwrites.
+\end{itemize}
+
+If you used conventions (caller-saved / callee-saved), explain them.
+
+\section{Kitchen Simulation Logic}
+
+\subsection{Tick Simulation}
+
+Explain how one tick is executed:
+
+\begin{itemize}
+\item how orders are moved into the correct station lines (new arrivals, finished stations, skipped stations),
+\item how each chef selects the next order,
+\item how the three timelines are appended,
+\item how state is updated (remaining work, finished stations, serve times).
+\end{itemize}
+
+\subsection{Chef Rule Implementations}
+
+Briefly explain each:
+
+\begin{itemize}
+\item FIRST: earliest entry time, no switching until the order finishes the station
+\item QUICK: per-tick minimum remaining work at the station
+\item TURNS-q: first-in first-out line rotation + turn length handling
+\item tie-breaking: entry time, then input order
+\end{itemize}
+
+Explain how one piece of code serves all three stations, and focus on differences in control flow and data updates.
+
+\section{Control Flow Design}
+
+Describe how your assembly program is structured:
+
+\begin{itemize}
+\item main loop (tick loop),
+\item parsing phase,
+\item simulation phase (three stations per tick),
+\item output phase,
+\item termination condition.
+\end{itemize}
+
+Mention use of:
+\begin{itemize}
+\item labels,
+\item jumps (conditional / unconditional),
+\item loop patterns.
+\end{itemize}
+
+
+\section{Representative Code Snippet}
+
+\begin{lstlisting}[style=AsmStyle]
+# Example snippet
 \end{lstlisting}
 
 Explain:
-\begin{itemize}[leftmargin=1.5em]
+\begin{itemize}
 \item what the code does,
-\item why it is important,
-\item what mistakes could occur here,
-\item why your implementation works correctly.
+\item which registers are used,
+\item how control flow works,
+\item why it is correct.
 \end{itemize}
 
-\section{Testing and Validation}
-
-Explain how you verified that your program works correctly.
+\section{Testing and Debugging}
 
 \subsection{Testing Strategy}
 
-Describe how you tested the program.
+\begin{itemize}
+\item sample inputs,
+\item edge cases (ties, idle chefs, switching dishes, skipped stations),
+\item manual vs automated testing.
+\end{itemize}
+
+\subsection{Debugging Approach}
+
+\begin{itemize}
+\item print-based debugging,
+\item register inspection,
+\item step-by-step tracing.
+\end{itemize}
+
+\subsection{Edge Cases}
 
 Examples:
-\begin{itemize}[leftmargin=1.5em]
-\item provided grader or checker,
-\item custom input files,
-\item manual interactive testing,
-\item compiler warnings or debugging prints.
+
+\begin{itemize}
+\item multiple arrivals at the same time,
+\item equal remaining work (QUICK),
+\item turn partially used (TURNS-q),
+\item orders that skip one or more stations,
+\item idle chefs and late arrivals,
+\item multi-digit numbers and serve times.
 \end{itemize}
 
-\subsection{Sample Interaction}
+\section{Course Concepts}
 
-Include a short input/output example demonstrating several commands.
+Relate your implementation to course topics:
 
+\subsection{Memory and Data Layout}
 
-\section{Discussion of Course Concepts}
+How memory is organized and accessed.
 
-Relate your implementation to concepts from the course.
+\subsection{Registers and Low-Level Computation}
 
-\subsection{Data Representation and Memory Organization}
+How computation is performed without high-level abstractions.
 
-Explain how the program state is organized in memory and why this design works well.
+\subsection{Control Flow and Branching}
 
-\subsection{Strings, Arrays, and Pointers}
+How loops and decisions are implemented.
 
-Discuss any non-trivial string processing, array traversal, or pointer usage in your solution.
+\subsection{Parsing Without Libraries}
 
-\subsection{Memory Management Choices}
+Manual string processing in assembly.
 
-Explain your memory strategy.
+\subsection{Tradeoffs}
 
-\begin{itemize}[leftmargin=1.5em]
-\item If you used dynamic memory, explain how allocations and frees are handled.
-\item If you used static arrays, explain why they were sufficient.
+\begin{itemize}
+\item simplicity vs efficiency,
+\item readability vs performance,
+\item static vs dynamic design.
 \end{itemize}
-
-\subsection{Robustness and Debugging}
-
-Describe one debugging challenge you encountered and how you solved it.
-
 
 \section{Conclusion}
 
-Summarize your implementation briefly.
+Summarize:
 
+\begin{itemize}
+\item strongest design decision,
+\item biggest challenge,
+\item possible improvements.
+\end{itemize}
 
 \section*{AI Usage Statement}
 
-If you used AI tools, document them here:
-\begin{itemize}[leftmargin=1.5em]
-\item tool name,
-\item how it was used (e.g., grammar checking, code formatting, brainstorming, debugging help, etc.),
-\item confirmation that the technical content is your own.
+The report must be written by you.
+
+If AI tools were used:
+\begin{itemize}
+\item which tools,
+\item for what purpose,
+\item confirmation that all technical content is understood.
 \end{itemize}
 
+\newpage
+
+\section*{Appendix: Bad vs Good Report Examples}
+
+This section illustrates the difference between weak and strong reports.
+
+\subsection*{Example 1: Parsing Logic}
+
+\textbf{Bad:}
+\begin{quote}
+We parse the input string and extract the values. We split by spaces and hyphens and convert numbers.
+\end{quote}
+
+\textbf{Why this is bad:}
+\begin{itemize}
+\item No mention of registers
+\item No explanation of how parsing actually works
+\item Could be written without implementing anything
+\end{itemize}
+
+\textbf{Good:}
+\begin{quote}
+We parse the input using a pointer stored in \texttt{rsi}, which traverses the input buffer character by character. 
+Digits are accumulated into integers using \texttt{rax = rax * 10 + (char - '0')}. 
+Hyphens (`-`) are used as field separators and trigger storing the parsed value into the corresponding array. 
+Spaces indicate transition to the next order. 
+
+We ensure correctness by resetting the accumulator register after each field and advancing the pointer carefully to avoid skipping characters.
+\end{quote}
+
+\subsection*{Example 2: State Representation}
+
+\textbf{Bad:}
+\begin{quote}
+We store orders in arrays and update their values during execution.
+\end{quote}
+
+\textbf{Why this is bad:}
+\begin{itemize}
+\item No structure
+\item No memory layout
+\item No connection to execution
+\end{itemize}
+
+\textbf{Good:}
+\begin{quote}
+Each order is represented using parallel arrays:
+\texttt{order\_id[]}, \texttt{arrival[]}, and \texttt{work[]}, where \texttt{work} holds the remaining work of every order at every station. 
+
+The base address of each array is stored in registers (\texttt{rbx}, \texttt{rcx}, etc.). The element for station \texttt{s} and order \texttt{i} is at index \texttt{s*10 + i}, accessed with scaled indexing, so the same code works for all three stations. 
+
+This design simplifies iteration and allows efficient comparisons when a chef selects the next order. 
+
+\end{quote}
+
+\subsection*{Example 3: Chef Choice Logic}
+
+\textbf{Bad:}
+\begin{quote}
+We implemented QUICK by selecting the order with the least remaining work at each tick.
+\end{quote}
+
+\textbf{Why this is bad:}
+\begin{itemize}
+\item Just restates the algorithm
+\item No implementation detail
+\end{itemize}
+
+\textbf{Good:}
+\begin{quote}
+At each tick, for the current station \texttt{s}, we iterate over all orders and compare their remaining work at that station. 
+The current minimum is stored in \texttt{r8}, and the index of the selected order is stored in \texttt{r9}. 
+
+For each order:
+\begin{itemize}
+\item we check if it is waiting in this station's line (its entry time is at most the current tick),
+\item we skip orders that have finished this station (remaining work = 0),
+\item we update the minimum if less remaining work is found; on a tie we keep the earlier entry time.
+\end{itemize}
+
+After selection, the chosen order's remaining work is decremented and its ID is written into the station's timeline buffer. 
+
+\end{quote}
+
+\subsection*{Example 4: Register Usage}
+
+\textbf{Bad:}
+\begin{quote}
+We used registers to store temporary values.
+\end{quote}
+
+\textbf{Why this is bad:}
+\begin{itemize}
+\item meaningless
+\item no mapping
+\end{itemize}
+
+\textbf{Good:}
+\begin{quote}
+We use:
+\begin{itemize}
+\item \texttt{rsi} as input pointer,
+\item \texttt{rdi} as output buffer pointer,
+\item \texttt{rcx} as loop counter,
+\item \texttt{r8} for current minimum remaining work,
+\item \texttt{r9} for selected order index.
+\end{itemize}
+
+Registers are reused carefully, and critical values are preserved across loops to prevent corruption.
+\end{quote}
+
+\subsection*{Summary}
+
+Strong reports:
+\begin{itemize}
+\item explain \textbf{how}, not just \textbf{what}
+\item refer to registers, memory, and control flow
+\item include concrete details and examples
+\end{itemize}
+
+Weak reports:
+\begin{itemize}
+\item restate the assignment
+\item avoid implementation details
+\item could be written without coding the project
+\end{itemize}
 \end{document}

@@ -1,0 +1,4 @@
+.RRRMMX...
+CCFFCCFX..
+PPP...MMFX
+P=3 C=6 R=4 M=8 F=9 X=10

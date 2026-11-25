@@ -1,0 +1,4 @@
+AABCC.....
+..AAABBC..
+.....A.BBC
+A=6 B=9 C=10

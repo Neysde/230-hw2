@@ -1,41 +1,32 @@
-# compiler and the flags
-CC     := gcc
-CFLAGS := -Wall -Wextra -pedantic
+EXEC=overclocked
+SRC=src/overclocked.s
+OBJ=src/overclocked.o
+TEST_DIR=test-cases
+OUTPUT_DIR=my-outputs
 
-# all source and header files in src
-SRCS := $(wildcard src/*.c)
-HDRS := $(wildcard src/*.h)
+all: $(EXEC)
 
-# commands (to separate them from files)
-.PHONY: default debug grade test memcheck clean
+$(EXEC): $(OBJ)
+	ld -o $(EXEC) $(OBJ)
 
-# make builds the shell
-default: bushell
+$(OBJ): $(SRC)
+	as -o $(OBJ) $(SRC)
 
-# rebuild when any .c or .h in src/ changes
-bushell: $(SRCS) $(HDRS)
-	$(CC) $(CFLAGS) -o $@ $(SRCS)
-
-# build with debug info (-g) so valgrind shows line numbers
-debug: clean
-	$(MAKE) CFLAGS="$(CFLAGS) -g"
-
-# course test cases checked with the course grader
-grade: bushell
-	python3 test/grader.py ./bushell test-cases $(if $(findstring s,$(MAKEFLAGS)),--quiet,)
-
-# our own test cases checked with the course grader
-test: bushell
-	python3 test/grader.py ./bushell tests
-
-# runs every course test input under valgrind and stops at the first leak or memory error
-memcheck: debug
-	@for f in test-cases/input*.txt; do \
-		valgrind --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1 -q \
-			./bushell < $$f > /dev/null || { echo "memcheck FAILED: $$f"; exit 1; }; \
-		echo "memcheck ok: $$f"; \
+testcases: $(EXEC)
+	@echo "Running test cases..."
+	@mkdir -p $(OUTPUT_DIR)
+	@for infile in $(TEST_DIR)/input_*.txt; do \
+		base=$$(basename $$infile); \
+		outfile=$$(echo $$base | sed 's/input_/output_/'); \
+		echo "  > $$infile -> $(OUTPUT_DIR)/$$outfile"; \
+		./$(EXEC) < $$infile > $(OUTPUT_DIR)/$$outfile; \
 	done
 
-# removes the executable and any object files
+grade: $(EXEC)
+	python3 test/grader.py ./$(EXEC) $(TEST_DIR)
+
 clean:
-	rm -f bushell src/*.o *.o src/*.gch
+	rm -f $(EXEC) $(OBJ)
+	rm -rf $(OUTPUT_DIR)
+
+.PHONY: all testcases grade clean
