@@ -1,16 +1,14 @@
-# overclocked - CMPE 230 Project 2 (starter file)
+# overclocked - cmpe 230 assignment 2
 #
-# Input  (stdin) : <RULE_PREP> <RULE_COOK> <RULE_PLATE> <ORDER> <ORDER> ...
+# input  (stdin) : <RULE_PREP> <RULE_COOK> <RULE_PLATE> <ORDER> <ORDER> ...
 #                  RULE  = FIRST | QUICK | TURNS-q
 #                  ORDER = ID-arrival-prep-cook-plate
-# Output (stdout): Prep timeline, Cook timeline, Plate timeline, serve times
+# output (stdout): prep timeline, cook timeline, plate timeline, serve times
 #
-# Declare whatever memory your design needs. Use Linux system calls only;
-# do not call C standard library functions.
-#
+# calling convention used by all routines
 #   args in rdi rsi rdx and result in rax
 #   rbx r12 r13 are callee-saved
-#   rax rcx rdx r8 r9 r10 caller-saved (may be changed)
+#   rax rcx rdx rsi rdi r8 r9 r10 are caller-saved (may be changed)
 
 .equ MAX_ORD, 10            # max number of orders
 .equ TL_SIZE, 1024          # bytes per station timeline (selected in base 2 according to T<=700)
@@ -23,8 +21,8 @@
 .section .bss # uninitialized variable section
 .balign 8 # align the address to a multiple of 8 (because of cache to increase performance (not necessary))
 # per order data indexed by input position
-arrival:  .skip MAX_ORD*8.      # leaves 80 bytes empty after the starting of arrival address
-work:     .skip MAX_ORD*3*8     # work[i*3 + s] (i=order, s=section) (2d as 1d array)
+arrival:  .skip MAX_ORD*8       # reserves 80 bytes starting at arrival
+work:     .skip MAX_ORD*3*8     # work[i*3 + s] (i=order, s=station) (2d as 1d array)
 stn:      .skip MAX_ORD*8       # stores current station or done index of orders
 etick:    .skip MAX_ORD*8       # entry tick at current station of orders
 rem:      .skip MAX_ORD*8       # remaining work at current station of orders
@@ -84,7 +82,7 @@ read_input:
     syscall
     cmp     $0, %rax                # kernel returns number of copied bytes to rax
     jle     .ri_done                # eof or error
-    add     %rax, %rbx              # saves the read byte count to rbx
+    add     %rax, %rbx              # adds the bytes just read to the total in rbx
     cmpb    $'\n', inbuf-1(%rbx)    # stop at end of line
     jne     .ri_loop                # go to loop again if it is not the end of the line
 .ri_done:
@@ -192,7 +190,7 @@ next_station:
     lea     (%rdi,%rdi,2), %rcx     # rcx = i*3
     mov     %rsi, %rax
 .ns_loop:
-    cmp     $DONE, %rax.            # whether order will be served or not
+    cmp     $DONE, %rax             # whether order will be served or not
     jge     .ns_done                # (jump if greater or equal)
     lea     (%rcx,%rax), %rdx       
     cmpq    $0, work(,%rdx,8)       # whether work is finished in that station or not
@@ -287,7 +285,7 @@ update_queues:
 .uq_pend:
     xor     %rdi, %rdi              # clears rdi
 .uq_ploop:
-    mov     pend(,%rdi,8), %rsi     # save that particular order's id to rsi
+    mov     pend(,%rdi,8), %rsi     # pending order index of station rdi or -1
     cmp     $-1, %rsi               
     je      .uq_pnext
     call    enqueue
@@ -500,7 +498,7 @@ itoa:
     push    %rdx                    # digits come out in reverse so we push them onto stack
     inc     %rcx
     test    %rax, %rax              
-    jnz     .it_div                 # loop until decimal part is 0
+    jnz     .it_div                 # loop until the quotient is 0
 .it_pop:
     pop     %rax
     movb    %al, (%rdi)             
@@ -533,7 +531,7 @@ print_output:
     xor     %r12, %r12              # clears r12 (station index)
 .out_line:                          # copy T chars of each timeline
     imul    $TL_SIZE, %r12, %rsi
-    add     $timeline, %rsi         # now rsi points to the current tick index in current station's row
+    add     $timeline, %rsi         # now rsi points to the start of this station's row (tick 0)
     mov     tick, %rcx              # tick equals T at the end
     rep movsb                       # !!!!! movsb copies 1 byte from rsi to rdi and add 1 to both rsi and rdi and does this operation rcx times
     movb    $'\n', (%rdi)           # we add newline at the end of each row
